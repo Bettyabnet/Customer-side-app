@@ -1,0 +1,799 @@
+python3 << 'PYEOF'
+icon_b64 = open('/home/claude/icon192.b64').read().strip()
+
+html = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FabricShop">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0F1923">
+<link rel="apple-touch-icon" href="data:image/png;base64,""" + icon_b64 + """">
+<link rel="manifest" href="./manifest.json">
+<title>Fabric Shop Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1923;--bg2:#162030;--bg3:#1E2D40;--card:#1A2740;
+  --border:#2A3F5A;--border2:#344E6E;--text:#F0F4F8;--text2:#94A8C0;--text3:#5A7A99;
+  --accent:#00D4FF;--accent2:#0099CC;--green:#00E676;--green2:#00B85A;
+  --red:#FF4444;--red2:#CC2222;--gold:#FFB800;
+  --shadow:0 4px 24px rgba(0,212,255,.08);--shadow2:0 8px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);max-width:500px;margin:0 auto;min-height:100vh}
+#setup-screen{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px}
+.setup-logo{font-size:64px;margin-bottom:20px;text-align:center}
+.setup-title{font-size:24px;font-weight:900;text-align:center;margin-bottom:8px;color:var(--text)}
+.setup-sub{font-size:14px;color:var(--text2);text-align:center;margin-bottom:32px;line-height:1.5}
+.setup-input{width:100%;background:var(--bg3);border:2px solid var(--border2);border-radius:14px;padding:16px 18px;color:var(--text);font-size:16px;font-family:inherit;outline:none;margin-bottom:12px;display:block;-webkit-appearance:none;appearance:none}
+.setup-input:focus{border-color:var(--accent)}
+.setup-btn{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:14px;padding:16px;color:#0F1923;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit;margin-top:8px;-webkit-appearance:none;appearance:none;display:block}
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--bg3);color:var(--accent);border:1px solid var(--accent);border-radius:24px;padding:10px 22px;z-index:9999;font-size:13px;font-weight:700;display:none;white-space:nowrap;max-width:90%}
+header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;padding-top:max(14px,env(safe-area-inset-top))}
+.header-left{font-size:17px;font-weight:900;display:flex;align-items:center;gap:8px}
+.header-date{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;box-shadow:0 0 8px var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+nav{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:57px;z-index:10}
+.nav-btn{flex:1;background:none;border:none;border-bottom:2px solid transparent;padding:10px 2px 8px;cursor:pointer;color:var(--text3);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:17px;font-family:inherit;-webkit-appearance:none;appearance:none}
+.nav-btn.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(0,212,255,.05)}
+.nav-label{font-size:9px;font-weight:700;color:inherit;letter-spacing:.3px}
+main{padding:16px 14px 120px}
+.section-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin-bottom:12px;margin-top:6px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.summary-card{background:var(--card);border-radius:16px;padding:16px 14px;border:1px solid var(--border);position:relative;overflow:hidden}
+.summary-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.summary-card.cyan::after{background:linear-gradient(90deg,var(--accent2),var(--accent))}
+.summary-card.green::after{background:linear-gradient(90deg,var(--green2),var(--green))}
+.summary-card.red::after{background:linear-gradient(90deg,var(--red2),var(--red))}
+.summary-card.gold::after{background:linear-gradient(90deg,#CC8800,var(--gold))}
+.card-icon{font-size:20px;margin-bottom:8px}
+.card-lbl{font-size:10px;color:var(--text3);font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.card-val{font-size:15px;font-weight:900}
+.card-val.cyan{color:var(--accent)}.card-val.green{color:var(--green)}.card-val.red{color:var(--red)}.card-val.gold{color:var(--gold)}
+.wide-card{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border);margin-bottom:14px}
+.wide-card-title{font-size:12px;font-weight:800;color:var(--text2);margin-bottom:13px;display:flex;align-items:center;gap:7px;padding-bottom:10px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.5px}
+.form-group{margin-bottom:12px}
+label{display:block;font-size:10px;color:var(--text3);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+input,select{width:100%;background:var(--bg3);border:1.5px solid var(--border);border-radius:11px;padding:12px 14px;color:var(--text);font-size:16px;outline:none;font-family:inherit;-webkit-appearance:none;appearance:none;display:block}
+input:focus,select:focus{border-color:var(--accent);background:var(--bg2)}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chip-row{display:flex;flex-wrap:wrap;gap:7px;margin-top:5px}
+.chip{padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:var(--bg3);color:var(--text2);font-family:inherit;-webkit-appearance:none;appearance:none}
+.chip.active{background:rgba(0,212,255,.15);border-color:var(--accent);color:var(--accent)}
+.calc-box{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:12px;display:none}
+.calc-title{font-size:10px;color:var(--accent);font-weight:800;margin-bottom:9px;text-transform:uppercase;letter-spacing:1px}
+.calc-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;color:var(--text2)}
+.calc-row span:last-child{color:var(--text);font-weight:700;font-family:'DM Mono',monospace}
+.calc-divider{border:none;border-top:1px solid var(--border);margin:8px 0}
+.calc-total-row{display:flex;justify-content:space-between;font-size:14px;font-weight:900;margin-top:4px}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;border-radius:12px;padding:14px;color:#0F1923;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;-webkit-appearance:none;appearance:none;display:block}
+.btn-success{width:100%;background:linear-gradient(135deg,var(--green2),var(--green));border:none;border-radius:12px;padding:14px;color:#0F1923;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;-webkit-appearance:none;appearance:none;display:block}
+.balance-box{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:14px;margin-bottom:12px}
+.bal-row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;color:var(--text2)}
+.bal-row span:last-child{font-weight:800;font-family:'DM Mono',monospace}
+.bal-total{display:flex;justify-content:space-between;font-size:15px;font-weight:900;border-top:1px solid var(--border);padding-top:9px;margin-top:6px}
+.profit-box{background:linear-gradient(135deg,#0D2235,#162D45);border:1px solid var(--accent);border-radius:16px;padding:18px;margin-bottom:16px}
+.profit-box-title{font-size:11px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px}
+.profit-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.profit-lbl{font-size:12px;color:var(--text2)}
+.profit-val{font-size:14px;font-weight:900;font-family:'DM Mono',monospace}
+.profit-big{font-size:28px;font-weight:900;font-family:'DM Mono',monospace;text-align:center;margin:10px 0}
+.profit-divider{border:none;border-top:1px solid var(--border);margin:10px 0}
+.rec-card{background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--border);margin-bottom:10px;border-left:3px solid var(--border)}
+.rec-card.delivery{border-left-color:var(--accent)}
+.rec-card.sale{border-left-color:var(--green)}
+.rec-card.payment{border-left-color:var(--gold)}
+.rec-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.rec-title{font-size:14px;font-weight:800}
+.rec-date{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;margin-top:2px}
+.rec-amount{font-size:15px;font-weight:900;text-align:right}
+.del-btn{background:none;border:none;cursor:pointer;font-size:16px;opacity:.4;padding:4px;-webkit-appearance:none}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.info-box{background:var(--bg3);border-radius:9px;padding:8px 10px;border:1px solid var(--border)}
+.info-lbl{font-size:9px;color:var(--text3);margin-bottom:2px;text-transform:uppercase;font-weight:700}
+.info-val{font-size:13px;font-weight:800;font-family:'DM Mono',monospace}
+.profit-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(0,230,118,.12);border:1px solid rgba(0,230,118,.3);border-radius:20px;padding:4px 10px;font-size:11px;font-weight:800;color:var(--green);margin-top:8px}
+.filter-row{display:flex;gap:8px;margin-bottom:12px}
+.filter-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-size:16px;outline:none;font-family:inherit;-webkit-appearance:none;appearance:none}
+.clear-btn{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:9px 14px;color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;font-weight:700;-webkit-appearance:none;appearance:none}
+.count-lbl{font-size:11px;color:var(--text3);margin-bottom:10px}
+.sub-tabs{display:flex;gap:7px;margin-bottom:14px}
+.sub-tab{flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;text-align:center;font-family:inherit;-webkit-appearance:none;appearance:none}
+.sub-tab.active{background:rgba(0,212,255,.12);border-color:var(--accent);color:var(--accent)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.backup-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.btn-sm{padding:10px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;border:1px solid var(--border);background:var(--bg3);color:var(--text2);-webkit-appearance:none;appearance:none;display:block;width:100%}
+.btn-sm-accent{background:rgba(0,212,255,.1);border-color:var(--accent);color:var(--accent)}
+.btn-sm-danger{background:rgba(255,68,68,.1);border-color:var(--red);color:var(--red);grid-column:1/-1}
+.tab{display:none}.tab.active{display:block}
+.empty{text-align:center;color:var(--text3);padding:40px 0;font-size:13px}
+.note{font-size:11px;color:var(--text3);margin-top:7px}
+</style>
+</head>
+<body>
+
+<div id="setup-screen">
+  <div class="setup-logo">&#128268;</div>
+  <div class="setup-title">Fabric Shop Tracker</div>
+  <div class="setup-sub">Enter your details to get started. All data stays on this device.</div>
+  <input class="setup-input" id="inp-shop" type="text" placeholder="Shop Name (e.g. Betty's Shop)" maxlength="40">
+  <input class="setup-input" id="inp-owner" type="text" placeholder="Your Name" maxlength="40">
+  <button class="setup-btn" id="start-btn">Start Tracking</button>
+</div>
+
+<div id="toast"></div>
+
+<header>
+  <div class="header-left">
+    <span>&#128268;</span>
+    <div>
+      <div id="shop-name-display" style="font-size:16px;font-weight:900">My Shop</div>
+      <div class="header-date" id="header-date"></div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px">
+    <div class="live-dot"></div>
+    <span style="font-size:10px;color:var(--text3);font-weight:700">SAVED</span>
+  </div>
+</header>
+
+<nav>
+  <button class="nav-btn active" data-tab="dashboard"><span>&#128202;</span><span class="nav-label">Dashboard</span></button>
+  <button class="nav-btn" data-tab="delivery"><span>&#128230;</span><span class="nav-label">Delivery</span></button>
+  <button class="nav-btn" data-tab="sales"><span>&#128176;</span><span class="nav-label">Sales</span></button>
+  <button class="nav-btn" data-tab="payment"><span>&#128179;</span><span class="nav-label">Payment</span></button>
+  <button class="nav-btn" data-tab="records"><span>&#128203;</span><span class="nav-label">Records</span></button>
+</nav>
+
+<main>
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard" class="tab active">
+  <div class="section-title">Overview</div>
+  <div class="summary-grid">
+    <div class="summary-card cyan"><div class="card-icon">&#128230;</div><div class="card-lbl">Total Received</div><div class="card-val cyan" id="d-received">Birr 0</div></div>
+    <div class="summary-card red"><div class="card-icon">&#9888;</div><div class="card-lbl">Balance Owed</div><div class="card-val red" id="d-owed">Birr 0</div></div>
+    <div class="summary-card green"><div class="card-icon">&#128176;</div><div class="card-lbl">Total Sales</div><div class="card-val green" id="d-sales">Birr 0</div></div>
+    <div class="summary-card gold"><div class="card-icon">&#128200;</div><div class="card-lbl">Total Profit</div><div class="card-val gold" id="d-profit">Birr 0</div></div>
+  </div>
+
+  <div class="section-title">Profit Summary</div>
+  <div class="profit-box">
+    <div class="profit-box-title">Your Earnings</div>
+    <div class="profit-row"><div class="profit-lbl">Revenue from Sales</div><div class="profit-val" id="ps-revenue" style="color:var(--green)">Birr 0</div></div>
+    <div class="profit-row"><div class="profit-lbl">Cost of Goods</div><div class="profit-val" id="ps-cost" style="color:var(--red)">Birr 0</div></div>
+    <hr class="profit-divider">
+    <div style="text-align:center;font-size:11px;color:var(--text3);margin-bottom:4px">NET PROFIT</div>
+    <div class="profit-big" id="ps-profit" style="color:var(--green)">Birr 0</div>
+    <div style="text-align:center;font-size:11px;color:var(--text3)" id="ps-margin">Margin: 0%</div>
+  </div>
+
+  <div class="section-title">Balance to Brother</div>
+  <div class="balance-box">
+    <div class="bal-row"><span>Total Delivered</span><span style="color:var(--accent)" id="bb-delivered">Birr 0</span></div>
+    <div class="bal-row"><span>Total Paid</span><span style="color:var(--green)" id="bb-paid">Birr 0</span></div>
+    <div class="bal-total"><span>Still Owe</span><span style="color:var(--red)" id="bb-owe">Birr 0</span></div>
+  </div>
+
+  <div class="section-title">Stats &amp; Backup</div>
+  <div class="wide-card">
+    <div class="stats-grid">
+      <div class="info-box" style="text-align:center"><div class="info-lbl">Deliveries</div><div class="info-val" id="stat-del">0</div></div>
+      <div class="info-box" style="text-align:center"><div class="info-lbl">Sales</div><div class="info-val" id="stat-sal">0</div></div>
+      <div class="info-box" style="text-align:center"><div class="info-lbl">Payments</div><div class="info-val" id="stat-pay">0</div></div>
+    </div>
+    <div class="backup-grid">
+      <button class="btn-sm btn-sm-accent" id="btn-export">Export Backup</button>
+      <button class="btn-sm" id="btn-import">Import Backup</button>
+      <input type="file" id="import-file" accept=".json" style="display:none">
+      <button class="btn-sm btn-sm-danger" id="btn-clear">Clear All Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELIVERY -->
+<div id="tab-delivery" class="tab">
+  <div class="section-title">Record Delivery</div>
+  <div class="wide-card">
+    <div class="wide-card-title">Delivery from Brother</div>
+    <div class="form-grid-2">
+      <div class="form-group"><label>Date</label><input type="date" id="d-date"></div>
+      <div class="form-group"><label>Unit</label>
+        <div class="chip-row">
+          <button class="chip active" data-unit="meter">meter</button>
+          <button class="chip" data-unit="kg">kg</button>
+          <button class="chip" data-unit="piece">piece</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group"><label>Fabric Name</label><input type="text" id="d-item" placeholder="e.g. Cotton, Silk..."></div>
+    <div class="form-grid-2">
+      <div class="form-group"><label>Number of Rolls</label><input type="number" id="d-rolls" placeholder="10" inputmode="decimal"></div>
+      <div class="form-group"><label id="d-per-lbl">Per Roll (m)</label><input type="number" id="d-per" placeholder="22.5" inputmode="decimal"></div>
+    </div>
+    <div class="form-group"><label id="d-price-lbl">Cost Price per m (Birr)</label><input type="number" id="d-price" placeholder="e.g. 45" inputmode="decimal"></div>
+    <div class="calc-box" id="d-calc">
+      <div class="calc-title">Delivery Summary</div>
+      <div class="calc-row"><span>Rolls</span><span id="dc-rolls">-</span></div>
+      <div class="calc-row"><span id="dc-per-lbl2">Per Roll</span><span id="dc-per">-</span></div>
+      <div class="calc-row"><span id="dc-qty-lbl">Total Qty</span><span id="dc-qty">-</span></div>
+      <div class="calc-row"><span>Cost Price</span><span id="dc-price">-</span></div>
+      <hr class="calc-divider">
+      <div class="calc-total-row"><span>Total Cost</span><span id="dc-total" style="color:var(--accent)">-</span></div>
+    </div>
+    <div class="form-group"><label>Notes (optional)</label><input type="text" id="d-notes" placeholder="Optional..."></div>
+    <button class="btn-primary" id="btn-add-delivery">Record Delivery</button>
+  </div>
+</div>
+
+<!-- SALES -->
+<div id="tab-sales" class="tab">
+  <div class="section-title">Record Sale</div>
+  <div class="wide-card">
+    <div class="wide-card-title">Sale &amp; Profit</div>
+    <div class="form-grid-2">
+      <div class="form-group"><label>Date</label><input type="date" id="s-date"></div>
+      <div class="form-group"><label>Unit</label>
+        <div class="chip-row">
+          <button class="chip active" data-sunit="meter">meter</button>
+          <button class="chip" data-sunit="kg">kg</button>
+          <button class="chip" data-sunit="piece">piece</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group"><label>Fabric Name</label><input type="text" id="s-item" placeholder="What did you sell?"></div>
+    <div class="form-grid-2">
+      <div class="form-group"><label id="s-qty-lbl">Quantity (m)</label><input type="number" id="s-qty" placeholder="5" inputmode="decimal"></div>
+      <div class="form-group"><label id="s-cost-lbl">Your Cost/m (Birr)</label><input type="number" id="s-cost" placeholder="What you paid" inputmode="decimal"></div>
+    </div>
+    <div class="form-group"><label id="s-sell-lbl">Selling Price/m (Birr)</label><input type="number" id="s-sell" placeholder="What customer pays" inputmode="decimal"></div>
+    <div class="calc-box" id="s-calc">
+      <div class="calc-title">Profit Calculation</div>
+      <div class="calc-row"><span id="sc-qty-lbl">Quantity</span><span id="sc-qty">-</span></div>
+      <div class="calc-row"><span>Revenue</span><span id="sc-rev" style="color:var(--green)">-</span></div>
+      <div class="calc-row"><span>Cost</span><span id="sc-cost" style="color:var(--red)">-</span></div>
+      <hr class="calc-divider">
+      <div class="calc-total-row"><span>Profit</span><span id="sc-profit" style="color:var(--gold)">-</span></div>
+      <div style="text-align:right;font-size:11px;color:var(--text3);margin-top:4px" id="sc-margin"></div>
+    </div>
+    <div class="form-group"><label>Customer (optional)</label><input type="text" id="s-customer" placeholder="Customer name..."></div>
+    <div class="form-group"><label>Notes (optional)</label><input type="text" id="s-notes" placeholder="Optional..."></div>
+    <button class="btn-success" id="btn-add-sale">Record Sale</button>
+  </div>
+</div>
+
+<!-- PAYMENT -->
+<div id="tab-payment" class="tab">
+  <div class="section-title">Pay Brother</div>
+  <div class="wide-card">
+    <div class="wide-card-title">Payment to Supplier</div>
+    <div class="balance-box">
+      <div class="bal-row"><span>Total Received</span><span style="color:var(--accent)" id="pb-received">Birr 0</span></div>
+      <div class="bal-row"><span>Already Paid</span><span style="color:var(--green)" id="pb-paid">Birr 0</span></div>
+      <div class="bal-total"><span>Currently Owe</span><span style="color:var(--red)" id="pb-owe">Birr 0</span></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-group"><label>Date</label><input type="date" id="p-date"></div>
+      <div class="form-group"><label>Method</label>
+        <div class="chip-row">
+          <button class="chip active" data-method="CBE">CBE</button>
+          <button class="chip" data-method="BOA">BOA</button>
+          <button class="chip" data-method="Cash">Cash</button>
+          <button class="chip" data-method="Other">Other</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group"><label>Amount (Birr)</label><input type="number" id="p-amount" placeholder="How much?" inputmode="decimal"></div>
+    <div class="balance-box" id="p-preview" style="display:none">
+      <div class="bal-row"><span>Paying now</span><span style="color:var(--green)" id="pp-paying">-</span></div>
+      <div class="bal-total"><span>Remaining after</span><span id="pp-rem">-</span></div>
+    </div>
+    <div class="form-group"><label>Notes (optional)</label><input type="text" id="p-notes" placeholder="Receipt number..."></div>
+    <button class="btn-success" id="btn-add-payment">Record Payment</button>
+  </div>
+</div>
+
+<!-- RECORDS -->
+<div id="tab-records" class="tab">
+  <div class="section-title">All Records</div>
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-rec="deliveries">Deliveries</button>
+    <button class="sub-tab" data-rec="sales">Sales</button>
+    <button class="sub-tab" data-rec="payments">Payments</button>
+  </div>
+  <div id="rec-deliveries">
+    <div class="filter-row"><input type="date" class="filter-input" id="f-del"><button class="clear-btn" id="fc-del">Clear</button></div>
+    <div class="count-lbl" id="cnt-del"></div>
+    <div id="list-del"></div>
+  </div>
+  <div id="rec-sales" style="display:none">
+    <div class="filter-row"><input type="date" class="filter-input" id="f-sal"><button class="clear-btn" id="fc-sal">Clear</button></div>
+    <div class="count-lbl" id="cnt-sal"></div>
+    <div id="list-sal"></div>
+  </div>
+  <div id="rec-payments" style="display:none">
+    <div class="filter-row"><input type="date" class="filter-input" id="f-pay"><button class="clear-btn" id="fc-pay">Clear</button></div>
+    <div class="count-lbl" id="cnt-pay"></div>
+    <div id="list-pay"></div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ---- STATE ----
+var KEYS = {shop:'fs_shop', owner:'fs_owner', del:'fs_del', sal:'fs_sal', pay:'fs_pay'};
+var shopName = '';
+var deliveries = [];
+var sales = [];
+var payments = [];
+var dUnit = 'meter';
+var sUnit = 'meter';
+var pMethod = 'CBE';
+
+// ---- SETUP BUTTON (attached after DOM ready) ----
+document.getElementById('start-btn').addEventListener('click', function() {
+  var shop = document.getElementById('inp-shop').value.trim();
+  var owner = document.getElementById('inp-owner').value.trim();
+  if (!shop) { toast('Please enter your shop name'); return; }
+  if (!owner) { toast('Please enter your name'); return; }
+  shopName = shop;
+  localStorage.setItem(KEYS.shop, shop);
+  localStorage.setItem(KEYS.owner, owner);
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('shop-name-display').textContent = shop;
+  toast('Welcome ' + owner + '!');
+});
+
+// ---- HELPERS ----
+function fmt(n) {
+  n = Number(n) || 0;
+  if (Math.abs(n) >= 1000000) return 'Birr ' + (n/1000000).toFixed(2) + 'M';
+  return 'Birr ' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function sym(u) { return u === 'meter' ? 'm' : u === 'kg' ? 'kg' : 'pc'; }
+function today() { return new Date().toISOString().split('T')[0]; }
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.display = 'block';
+  setTimeout(function() { t.style.display = 'none'; }, 2500);
+}
+function save() {
+  try {
+    localStorage.setItem(KEYS.del, JSON.stringify(deliveries));
+    localStorage.setItem(KEYS.sal, JSON.stringify(sales));
+    localStorage.setItem(KEYS.pay, JSON.stringify(payments));
+  } catch(e) { toast('Save error: ' + e.message); }
+}
+function balance() {
+  var td = deliveries.reduce(function(s,d){return s+d.totalCost;},0);
+  var tp = payments.reduce(function(s,p){return s+p.amount;},0);
+  return {totalDel:td, totalPaid:tp, owe:td-tp};
+}
+function profitSummary() {
+  var r = sales.reduce(function(s,x){return s+x.revenue;},0);
+  var c = sales.reduce(function(s,x){return s+x.totalCost;},0);
+  return {revenue:r, cost:c, profit:r-c};
+}
+
+// ---- TABS ----
+document.querySelectorAll('.nav-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var tab = btn.getAttribute('data-tab');
+    document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+    document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+    btn.classList.add('active');
+    document.getElementById('tab-'+tab).classList.add('active');
+    if (tab === 'dashboard') renderDashboard();
+    if (tab === 'records') { renderDel(); renderSal(); renderPay(); }
+    if (tab === 'payment') updatePayPreview();
+  });
+});
+
+// ---- SUB TABS ----
+document.querySelectorAll('.sub-tab').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var rec = btn.getAttribute('data-rec');
+    document.querySelectorAll('.sub-tab').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    ['deliveries','sales','payments'].forEach(function(r) {
+      document.getElementById('rec-'+r).style.display = r===rec ? 'block' : 'none';
+    });
+  });
+});
+
+// ---- UNIT CHIPS (delivery) ----
+document.querySelectorAll('[data-unit]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    dUnit = btn.getAttribute('data-unit');
+    document.querySelectorAll('[data-unit]').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    var s = sym(dUnit);
+    document.getElementById('d-per-lbl').textContent = 'Per Roll (' + s + ')';
+    document.getElementById('d-price-lbl').textContent = 'Cost Price per ' + s + ' (Birr)';
+    updateDelCalc();
+  });
+});
+
+// ---- UNIT CHIPS (sales) ----
+document.querySelectorAll('[data-sunit]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    sUnit = btn.getAttribute('data-sunit');
+    document.querySelectorAll('[data-sunit]').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+    var s = sym(sUnit);
+    document.getElementById('s-qty-lbl').textContent = 'Quantity (' + s + ')';
+    document.getElementById('s-cost-lbl').textContent = 'Your Cost/' + s + ' (Birr)';
+    document.getElementById('s-sell-lbl').textContent = 'Selling Price/' + s + ' (Birr)';
+    updateSalCalc();
+  });
+});
+
+// ---- METHOD CHIPS ----
+document.querySelectorAll('[data-method]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    pMethod = btn.getAttribute('data-method');
+    document.querySelectorAll('[data-method]').forEach(function(b){b.classList.remove('active');});
+    btn.classList.add('active');
+  });
+});
+
+// ---- DELIVERY CALC ----
+function updateDelCalc() {
+  var rolls = parseFloat(document.getElementById('d-rolls').value) || 0;
+  var per   = parseFloat(document.getElementById('d-per').value) || 0;
+  var price = parseFloat(document.getElementById('d-price').value) || 0;
+  var box = document.getElementById('d-calc');
+  if (!rolls || !per || !price) { box.style.display='none'; return; }
+  var qty = rolls * per, total = qty * price, s = sym(dUnit);
+  box.style.display = 'block';
+  document.getElementById('dc-rolls').textContent = rolls + ' rolls';
+  document.getElementById('dc-per-lbl2').textContent = 'Per Roll (' + s + ')';
+  document.getElementById('dc-per').textContent = per + ' ' + s;
+  document.getElementById('dc-qty-lbl').textContent = 'Total (' + s + ')';
+  document.getElementById('dc-qty').textContent = qty.toFixed(2) + ' ' + s;
+  document.getElementById('dc-price').textContent = fmt(price) + '/' + s;
+  document.getElementById('dc-total').textContent = fmt(total);
+}
+document.getElementById('d-rolls').addEventListener('input', updateDelCalc);
+document.getElementById('d-per').addEventListener('input', updateDelCalc);
+document.getElementById('d-price').addEventListener('input', updateDelCalc);
+
+// ---- SALE CALC ----
+function updateSalCalc() {
+  var qty  = parseFloat(document.getElementById('s-qty').value) || 0;
+  var cost = parseFloat(document.getElementById('s-cost').value) || 0;
+  var sell = parseFloat(document.getElementById('s-sell').value) || 0;
+  var box = document.getElementById('s-calc');
+  if (!qty || !cost || !sell) { box.style.display='none'; return; }
+  var rev = qty*sell, tc = qty*cost, profit = rev-tc;
+  var margin = rev > 0 ? (profit/rev*100).toFixed(1) : 0;
+  var s = sym(sUnit);
+  box.style.display = 'block';
+  document.getElementById('sc-qty-lbl').textContent = 'Quantity (' + s + ')';
+  document.getElementById('sc-qty').textContent = qty + ' ' + s;
+  document.getElementById('sc-rev').textContent = fmt(rev);
+  document.getElementById('sc-cost').textContent = fmt(tc);
+  document.getElementById('sc-profit').textContent = fmt(profit);
+  document.getElementById('sc-margin').textContent = 'Margin: ' + margin + '%';
+}
+document.getElementById('s-qty').addEventListener('input', updateSalCalc);
+document.getElementById('s-cost').addEventListener('input', updateSalCalc);
+document.getElementById('s-sell').addEventListener('input', updateSalCalc);
+
+// ---- PAYMENT PREVIEW ----
+function updatePayPreview() {
+  var b = balance();
+  document.getElementById('pb-received').textContent = fmt(b.totalDel);
+  document.getElementById('pb-paid').textContent = fmt(b.totalPaid);
+  document.getElementById('pb-owe').textContent = fmt(b.owe);
+  var amount = parseFloat(document.getElementById('p-amount').value) || 0;
+  var box = document.getElementById('p-preview');
+  if (!amount) { box.style.display='none'; return; }
+  box.style.display = 'block';
+  var rem = b.owe - amount;
+  document.getElementById('pp-paying').textContent = fmt(amount);
+  document.getElementById('pp-rem').textContent = fmt(rem);
+  document.getElementById('pp-rem').style.color = rem > 0 ? 'var(--red)' : rem < 0 ? 'var(--accent)' : 'var(--green)';
+}
+document.getElementById('p-amount').addEventListener('input', updatePayPreview);
+
+// ---- ADD DELIVERY ----
+document.getElementById('btn-add-delivery').addEventListener('click', function() {
+  var item  = document.getElementById('d-item').value.trim();
+  var rolls = parseFloat(document.getElementById('d-rolls').value);
+  var per   = parseFloat(document.getElementById('d-per').value);
+  var price = parseFloat(document.getElementById('d-price').value);
+  if (!item)  { toast('Enter fabric name'); return; }
+  if (!rolls) { toast('Enter number of rolls'); return; }
+  if (!per)   { toast('Enter meters per roll'); return; }
+  if (!price) { toast('Enter cost price'); return; }
+  var qty = rolls * per, totalCost = qty * price;
+  deliveries.unshift({
+    id: Date.now(),
+    date: document.getElementById('d-date').value || today(),
+    item: item, unit: dUnit, rolls: rolls, per: per,
+    price: price, qty: qty, totalCost: totalCost,
+    notes: document.getElementById('d-notes').value.trim()
+  });
+  save();
+  ['d-item','d-rolls','d-per','d-price','d-notes'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('d-calc').style.display = 'none';
+  toast('Delivery saved - ' + fmt(totalCost));
+  renderDashboard();
+});
+
+// ---- ADD SALE ----
+document.getElementById('btn-add-sale').addEventListener('click', function() {
+  var item = document.getElementById('s-item').value.trim();
+  var qty  = parseFloat(document.getElementById('s-qty').value);
+  var cost = parseFloat(document.getElementById('s-cost').value);
+  var sell = parseFloat(document.getElementById('s-sell').value);
+  if (!item) { toast('Enter fabric name'); return; }
+  if (!qty)  { toast('Enter quantity'); return; }
+  if (!cost) { toast('Enter your cost price'); return; }
+  if (!sell) { toast('Enter selling price'); return; }
+  var revenue = qty*sell, totalCost = qty*cost, profit = revenue-totalCost;
+  sales.unshift({
+    id: Date.now(),
+    date: document.getElementById('s-date').value || today(),
+    item: item, unit: sUnit, qty: qty, cost: cost, sell: sell,
+    revenue: revenue, totalCost: totalCost, profit: profit,
+    margin: revenue > 0 ? (profit/revenue*100).toFixed(1) : 0,
+    customer: document.getElementById('s-customer').value.trim(),
+    notes: document.getElementById('s-notes').value.trim()
+  });
+  save();
+  ['s-item','s-qty','s-cost','s-sell','s-customer','s-notes'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('s-calc').style.display = 'none';
+  toast('Sale saved - Profit: ' + fmt(profit));
+  renderDashboard();
+});
+
+// ---- ADD PAYMENT ----
+document.getElementById('btn-add-payment').addEventListener('click', function() {
+  var amount = parseFloat(document.getElementById('p-amount').value);
+  if (!amount || amount <= 0) { toast('Enter a valid amount'); return; }
+  payments.unshift({
+    id: Date.now(),
+    date: document.getElementById('p-date').value || today(),
+    amount: amount, method: pMethod,
+    notes: document.getElementById('p-notes').value.trim()
+  });
+  save();
+  document.getElementById('p-amount').value = '';
+  document.getElementById('p-notes').value = '';
+  document.getElementById('p-preview').style.display = 'none';
+  updatePayPreview();
+  toast('Payment saved - ' + fmt(amount));
+  renderDashboard();
+});
+
+// ---- DELETE ----
+function delDelivery(id) {
+  if (!confirm('Delete this delivery?')) return;
+  deliveries = deliveries.filter(function(d){return d.id !== id;});
+  save(); renderDel(); renderDashboard(); toast('Deleted');
+}
+function delSale(id) {
+  if (!confirm('Delete this sale?')) return;
+  sales = sales.filter(function(s){return s.id !== id;});
+  save(); renderSal(); renderDashboard(); toast('Deleted');
+}
+function delPayment(id) {
+  if (!confirm('Delete this payment?')) return;
+  payments = payments.filter(function(p){return p.id !== id;});
+  save(); renderPay(); renderDashboard(); toast('Deleted');
+}
+
+// ---- RENDER DASHBOARD ----
+function renderDashboard() {
+  var b = balance(), ps = profitSummary();
+  var totalSales = sales.reduce(function(s,x){return s+x.revenue;},0);
+  document.getElementById('d-received').textContent = fmt(b.totalDel);
+  document.getElementById('d-owed').textContent = fmt(b.owe);
+  document.getElementById('d-sales').textContent = fmt(totalSales);
+  document.getElementById('d-profit').textContent = fmt(ps.profit);
+  document.getElementById('ps-revenue').textContent = fmt(ps.revenue);
+  document.getElementById('ps-cost').textContent = fmt(ps.cost);
+  document.getElementById('ps-profit').textContent = fmt(ps.profit);
+  document.getElementById('ps-profit').style.color = ps.profit >= 0 ? 'var(--green)' : 'var(--red)';
+  var m = ps.revenue > 0 ? (ps.profit/ps.revenue*100).toFixed(1) : 0;
+  document.getElementById('ps-margin').textContent = 'Margin: ' + m + '%';
+  document.getElementById('bb-delivered').textContent = fmt(b.totalDel);
+  document.getElementById('bb-paid').textContent = fmt(b.totalPaid);
+  document.getElementById('bb-owe').textContent = fmt(b.owe);
+  document.getElementById('stat-del').textContent = deliveries.length;
+  document.getElementById('stat-sal').textContent = sales.length;
+  document.getElementById('stat-pay').textContent = payments.length;
+}
+
+// ---- RENDER RECORDS ----
+function renderDel() {
+  var fd = document.getElementById('f-del').value;
+  var f = deliveries.filter(function(d){return !fd || d.date===fd;});
+  document.getElementById('cnt-del').textContent = f.length + ' deliveries';
+  var el = document.getElementById('list-del');
+  if (!f.length) { el.innerHTML = '<div class="empty">No deliveries yet.</div>'; return; }
+  el.innerHTML = f.map(function(d) {
+    return '<div class="rec-card delivery">' +
+      '<div class="rec-header">' +
+        '<div><div class="rec-title">' + d.item + '</div>' +
+        '<div class="rec-date">' + d.date + ' &middot; ' + d.rolls + ' rolls &middot; ' + d.qty.toFixed(2) + ' ' + sym(d.unit) + '</div></div>' +
+        '<div style="display:flex;align-items:flex-start;gap:8px">' +
+          '<div class="rec-amount" style="color:var(--accent)">' + fmt(d.totalCost) + '</div>' +
+          '<button class="del-btn" onclick="delDelivery(' + d.id + ')">&#128465;</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="info-grid">' +
+        '<div class="info-box"><div class="info-lbl">Rolls</div><div class="info-val">' + d.rolls + '</div></div>' +
+        '<div class="info-box"><div class="info-lbl">Per Roll</div><div class="info-val">' + d.per + ' ' + sym(d.unit) + '</div></div>' +
+        '<div class="info-box"><div class="info-lbl">Total Qty</div><div class="info-val">' + d.qty.toFixed(2) + ' ' + sym(d.unit) + '</div></div>' +
+        '<div class="info-box"><div class="info-lbl">Cost/' + sym(d.unit) + '</div><div class="info-val">' + fmt(d.price) + '</div></div>' +
+      '</div>' +
+      (d.notes ? '<div class="note">' + d.notes + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function renderSal() {
+  var fd = document.getElementById('f-sal').value;
+  var f = sales.filter(function(s){return !fd || s.date===fd;});
+  document.getElementById('cnt-sal').textContent = f.length + ' sales';
+  var el = document.getElementById('list-sal');
+  if (!f.length) { el.innerHTML = '<div class="empty">No sales yet.</div>'; return; }
+  el.innerHTML = f.map(function(s) {
+    return '<div class="rec-card sale">' +
+      '<div class="rec-header">' +
+        '<div><div class="rec-title">' + s.item + '</div>' +
+        '<div class="rec-date">' + s.date + (s.customer ? ' &middot; ' + s.customer : '') + '</div></div>' +
+        '<div style="display:flex;align-items:flex-start;gap:8px">' +
+          '<div class="rec-amount" style="color:var(--green)">' + fmt(s.revenue) + '</div>' +
+          '<button class="del-btn" onclick="delSale(' + s.id + ')">&#128465;</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="info-grid">' +
+        '<div class="info-box"><div class="info-lbl">Qty</div><div class="info-val">' + s.qty + ' ' + sym(s.unit) + '</div></div>' +
+        '<div class="info-box"><div class="info-lbl">Sell Price</div><div class="info-val">' + fmt(s.sell) + '</div></div>' +
+        '<div class="info-box"><div class="info-lbl">Cost</div><div class="info-val">' + fmt(s.totalCost) + '</div></div>' +
+        '<div class="info-box"><div class="info-lbl">Revenue</div><div class="info-val">' + fmt(s.revenue) + '</div></div>' +
+      '</div>' +
+      '<div class="profit-badge">Profit: ' + fmt(s.profit) + ' &middot; ' + s.margin + '%</div>' +
+      (s.notes ? '<div class="note">' + s.notes + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function renderPay() {
+  var fd = document.getElementById('f-pay').value;
+  var f = payments.filter(function(p){return !fd || p.date===fd;});
+  document.getElementById('cnt-pay').textContent = f.length + ' payments';
+  var el = document.getElementById('list-pay');
+  if (!f.length) { el.innerHTML = '<div class="empty">No payments yet.</div>'; return; }
+  el.innerHTML = f.map(function(p) {
+    return '<div class="rec-card payment">' +
+      '<div class="rec-header">' +
+        '<div><div class="rec-title">Payment to Brother</div>' +
+        '<div class="rec-date">' + p.date + ' &middot; ' + p.method + '</div></div>' +
+        '<div style="display:flex;align-items:flex-start;gap:8px">' +
+          '<div class="rec-amount" style="color:var(--gold)">' + fmt(p.amount) + '</div>' +
+          '<button class="del-btn" onclick="delPayment(' + p.id + ')">&#128465;</button>' +
+        '</div>' +
+      '</div>' +
+      (p.notes ? '<div class="note">' + p.notes + '</div>' : '') +
+    '</div>';
+  }).join('');
+}
+
+// ---- FILTER CLEAR ----
+document.getElementById('fc-del').addEventListener('click', function(){document.getElementById('f-del').value='';renderDel();});
+document.getElementById('fc-sal').addEventListener('click', function(){document.getElementById('f-sal').value='';renderSal();});
+document.getElementById('fc-pay').addEventListener('click', function(){document.getElementById('f-pay').value='';renderPay();});
+document.getElementById('f-del').addEventListener('change', renderDel);
+document.getElementById('f-sal').addEventListener('change', renderSal);
+document.getElementById('f-pay').addEventListener('change', renderPay);
+
+// ---- BACKUP ----
+document.getElementById('btn-export').addEventListener('click', function() {
+  var data = {version:1, exportDate:new Date().toISOString(), deliveries:deliveries, sales:sales, payments:payments};
+  var blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  var d = new Date();
+  a.href = url;
+  a.download = 'fabric-backup-' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('Backup exported');
+});
+document.getElementById('btn-import').addEventListener('click', function() {
+  document.getElementById('import-file').click();
+});
+document.getElementById('import-file').addEventListener('change', function() {
+  var file = this.files[0]; if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      if (!data.deliveries || !data.sales || !data.payments) throw new Error('Invalid file');
+      if (!confirm('Import ' + data.deliveries.length + ' deliveries, ' + data.sales.length + ' sales, ' + data.payments.length + ' payments? This replaces current data.')) return;
+      deliveries = data.deliveries; sales = data.sales; payments = data.payments;
+      save(); renderDashboard(); toast('Backup imported');
+    } catch(err) { toast('Invalid backup file'); }
+  };
+  reader.readAsText(file);
+  this.value = '';
+});
+document.getElementById('btn-clear').addEventListener('click', function() {
+  if (!confirm('Delete ALL data? This cannot be undone!')) return;
+  if (!confirm('Are you 100% sure?')) return;
+  deliveries = []; sales = []; payments = [];
+  save(); renderDashboard(); toast('All data cleared');
+});
+
+// ---- INIT ----
+function init() {
+  try {
+    deliveries = JSON.parse(localStorage.getItem(KEYS.del) || '[]');
+    sales      = JSON.parse(localStorage.getItem(KEYS.sal) || '[]');
+    payments   = JSON.parse(localStorage.getItem(KEYS.pay) || '[]');
+  } catch(e) { deliveries=[]; sales=[]; payments=[]; }
+
+  var saved = localStorage.getItem(KEYS.shop) || '';
+  if (saved) {
+    shopName = saved;
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('shop-name-display').textContent = saved;
+  }
+
+  var t = today();
+  document.getElementById('d-date').value = t;
+  document.getElementById('s-date').value = t;
+  document.getElementById('p-date').value = t;
+
+  var now = new Date();
+  document.getElementById('header-date').textContent = now.toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
+
+  renderDashboard();
+}
+
+// ---- SERVICE WORKER ----
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+
+init();
+</script>
+</body>
+</html>"""
+
+with open('/home/claude/index.html', 'w', encoding='utf-8') as f:
+    f.write(html)
+
+print("Written:", len(html), "bytes")
+# Quick sanity checks
+checks = [
+    ("start-btn listener", "start-btn"),
+    ("completeSetup replaced", "addEventListener('click'" in html),
+    ("No broken unicode", "\\u1265" not in html),
+    ("No template literals in JS", "${" not in html.split("<script>")[1]),
+    ("fmt function", "function fmt("),
+    ("save function", "function save("),
+]
+for name, check in checks:
+    if isinstance(check, str):
+        print(name + ":", "OK" if check in html else "MISSING")
+    else:
+        print(name + ":", "OK" if check else "FAIL")
+PYEOF
